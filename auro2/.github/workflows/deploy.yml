@@ -1,0 +1,44 @@
+name: Deploy to Digital Ocean
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+          
+      - name: Install Dependencies
+        run: |
+          cd auro2
+          npm install
+          cd server
+          npm install
+          
+      - name: Build Frontend
+        run: |
+          cd auro2
+          npm run build
+          
+      - name: Deploy to Digital Ocean
+        uses: appleboy/ssh-action@master
+        with:
+          host: 165.22.210.124
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/aurovillenetwork.org
+            git pull
+            cd auro2
+            npm install
+            npm run build
+            cd server
+            npm install
+            pm2 restart auroville-api 
